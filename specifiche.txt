@@ -1,0 +1,4 @@
+1)client invia ID
+2)server invia dati contenuti nel file ID (se esiste) altrimenti lo crea e inizializza la variabile numero alla prima inviata dal client.
+3)il client può fare dec oppure inc per decrementare o incrementare il numero
+4)il server reinvia il numero
