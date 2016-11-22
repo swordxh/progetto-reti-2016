@@ -106,10 +106,10 @@ void serverstart (int sock){
 }
 
 int isthere (char nome[], nodo **head){
-    if (*head==NULL){
-        *head=malloc(sizeof(nodo));
-        *head->next=NULL;
-        strcpy(*head->name,nome);
+    if ((*head)==NULL){
+        (*head)=malloc(sizeof(nodo));
+        (*head)->next=NULL;
+        strcpy((*head)->name,nome);
         return(0);
     }
     else {
@@ -131,10 +131,10 @@ int isthere (char nome[], nodo **head){
 }
 
 void deletename(char nome[], nodo **head){
-    if (*head!=NULL){
-        if ((strcmp(*head->name, nome)==0)){
+    if ((*head)!=NULL){
+        if ((strcmp((*head)->name, nome)==0)){
             free(*head);
-            *head=NULL;
+            (*head)=NULL;
         }
         else{
 
