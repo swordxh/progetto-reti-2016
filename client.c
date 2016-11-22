@@ -13,9 +13,8 @@
 
 #define MAXLINE 99
 
-int
-main(int argc, char **argv)
-{
+int main(int argc, char **argv){
+    
 	int			sockfd, n;
 	char			recvline[MAXLINE + 1];
 	struct sockaddr_in	servaddr;
@@ -48,6 +47,7 @@ main(int argc, char **argv)
 		exit(-4); 
 	}
     
+    printf ("ciao");
 
     //mando id al server
     
@@ -57,9 +57,8 @@ main(int argc, char **argv)
     }
     
     n=0;
-    
+
     for(;;){ //per far si che una volta finito di incrementare ricomincia e rifa da capo finchè ctrl+c
-    
     //stampa su shell client (leggendo dal buffer) quello che manda server
         
     while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
@@ -86,8 +85,9 @@ main(int argc, char **argv)
         
     //client scrive ora su buffer con valore da inizializzare/decrementare o aumentare
     char string[MAXLINE];
+    
         
-        if (fgets(string, MAXLINE, stdin)==EOF) {
+        if (fgets(string, MAXLINE, stdin)==NULL) {
             printf("fgets() error\n");
             exit(-9);
         }
@@ -102,3 +102,4 @@ main(int argc, char **argv)
 
 	exit(0);
 }
+
