@@ -48,63 +48,57 @@ main(int argc, char **argv)
 		exit(-4); 
 	}
     
-    for(;;){ //per far si che una volta finito di incrementare ricomincia e rifa da capo finchè ctrl+c
-    
-    
-    
-    /*procedimento di stampa su shell client di quello che server manda nel socket:
-     -read legge dal socket e mette su recvline per un massimo di MAXLINE righe
-     -fput fa la stampa su shell (stdout) di quello che c'è in recvline)
-     */
-    
+
     //mando id al server
     
-    
-    char idString[MAXLINE];
-    fgets(idString, MAXLINE, stdin);
-    //controlli su fgets
-
-    n=write(sockfd,idString,MAXLINE);//scrivo sul socket id utente
-    
-    if (n<0){
+    if ((n=write(sockfd,argv[2],MAXLINE))<0){
         printf("write() error\n");
-        exit(-5);
+        exit(-6);
     }
     
     n=0;
     
-        while ( (n = read(sockfd, recvline, MAXLINE)) > 0) { //stampa su shell client (leggendo dal buffer) quello che manda server
+    for(;;){ //per far si che una volta finito di incrementare ricomincia e rifa da capo finchè ctrl+c
+    
+    //stampa su shell client (leggendo dal buffer) quello che manda server
+        
+    while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
             recvline[n] = 0;
             if (fputs(recvline, stdout) == EOF){
                 printf("fputs() error\n");
-                exit(-6);
+                exit(-7);
             }
         }
         if (n < 0){
             
             printf("read() error\n");
-            exit(-7);
+            exit(-8);
         }
+        
+        n=0;
+        
     
-    n=0;
+    /*procedimento di stampa su shell client di quello che server manda nel socket:
+     -read legge dal socket e mette su recvline per un massimo di MAXLINE righe
+     -fput fa la stampa su shell (stdout) di quello che c'è in recvline)
+     */
         
         
+    //client scrive ora su buffer con valore da inizializzare/decrementare o aumentare
     char string[MAXLINE];
-    fgets(string, MAXLINE, stdin);
-    //controlli gets
-    
-    //fgets: metti dentro una variabile ciò che scrive client sulla shell(cifra)
-    
-    n=write(sockfd,string,MAXLINE);
-    
-    if (n<0){
-        printf("write() error\n");
-        exit(-8);
-    }
+        
+        if (fgets(string, MAXLINE, stdin)==EOF) {
+            printf("fgets() error\n");
+            exit(-9);
+        }
+        
+        if ((n=write(sockfd,string,MAXLINE))<0){
+            printf("write() error\n");
+            exit(-10);
+        }
     
     }
 
 
 	exit(0);
 }
-
