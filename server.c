@@ -91,7 +91,8 @@ void serverstart (int sock, char nome[] ){
 
     if (!(flock(fd, LOCK_EX | LOCK_NB))){
 
-        if(read(fd, buffer, 1)==0){
+        if(n=read(fd, buffer, 1)==0){
+            do{
             n = write(sock,"inserisci un numero\n",maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket");
@@ -110,10 +111,10 @@ void serverstart (int sock, char nome[] ){
                 close(fd);
                 exit(1);
             }
-            buffer[n]='\0';
-            printf("BUFFER %s\n",buffer);
-            variable=atoi(buffer);
-            printf("questo è l intero:%d",variable);
+
+            }while (sscanf(buffer, "%d", &variable) == 0);
+
+            lseek(fd, 0, SEEK_SET);
             n = write(fd, buffer, maxlen);
             n = write(sock, buffer, maxlen);
             if (n < 0) {
@@ -124,8 +125,11 @@ void serverstart (int sock, char nome[] ){
                 exit(1);
             }
         }
-        else if (read(fd, buffer, maxlen)>=0){
+        else if (n>=0){
+            lseek(fd, 0, SEEK_SET);
+            n=read(fd, buffer, maxlen)>=0;
             variable=atoi(buffer);
+            lseek(fd, 0, SEEK_SET);
             n = write(sock,buffer,maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket");
@@ -168,7 +172,9 @@ void serverstart (int sock, char nome[] ){
             else {
                 variable=variable+1;
             }
-            snprintf(buffer, maxlen, "%d\0", variable);
+            memset(buffer,0 , sizeof(buffer));
+            snprintf(buffer, maxlen, "%d", variable);
+            lseek(fd, 0, SEEK_SET);
             n = write(fd, buffer, maxlen);
             n=write(sock,buffer,maxlen);
             if (n < 0) {
