@@ -9,21 +9,13 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include<pthread.h>
+#include <sys/file.h>
+#include <fcntl.h>
 #define maxlen 256
 
-typedef struct lista{
-    char name[maxlen];
-    struct lista *next;
-}nodo;
-
-void serverstart (int sock, char nome[], nodo **head,volatile long* tst);
-int isthere(char nome[], nodo** head);
-void deletename(char nome[], nodo **head);
+void serverstart (int sock, char nome[]);
 
 int main( int argc, char *argv[] ) {
-    volatile long testandset=0;
-    nodo *tmphead=NULL;
-    nodo ** head=&tmphead;
     int sockfd, newsockfd;
     char buffer[maxlen];
     struct sockaddr_in serv_addr;
@@ -55,126 +47,91 @@ int main( int argc, char *argv[] ) {
             exit(1);
         }
         char buffer[maxlen];
-        strcpy(buffer, "\0");
+        bzero(buffer,maxlen);
         n = read(newsockfd,buffer,maxlen-1);
-        n = write(newsockfd,"test",5);
         if (n>0){
-            if (!(isthere (buffer, head))){
-                printf("%s è entrato\n", buffer);
-                pid = fork();
-                if (pid < 0) {
-                    perror("errore in fork");
-                    exit(1);
-                }
-
-                if (pid == 0) {
-
-                    close(sockfd);
-                    serverstart(newsockfd, buffer, head, &testandset);
-                    exit(0);
-                }
-                else {
-                    close(newsockfd);
-                }
+            printf("%s è entrato\n", buffer);
+            pid = fork();
+            if (pid < 0) {
+                perror("errore in fork");
+                exit(1);
             }
-            else{
-                n = write(newsockfd,"c'è già un utente attivo con quel ID!",37);
-                if (n < 0) {
-                    printf("errore nella scrittura del socket");
-                }
+
+            if (pid == 0) {
+
+                close(sockfd);
+                serverstart(newsockfd, buffer);
+                exit(0);
+            }
+            else {
                 close(newsockfd);
             }
         }
-        else {close(newsockfd);
+        else{
+            printf("errore nella lettura del socket");
+            close(newsockfd);
         }
-
     }
+
 }
 
-void serverstart (int sock, char nome[], nodo **head,volatile long* tst ){
+void serverstart (int sock, char nome[] ){
     int n;
-    int firsthit=0;
     char buffer[maxlen];
-    bzero(buffer,maxlen);
-    while(1){
-        n = read(sock,buffer,maxlen-1);
+    char buffer2[maxlen];
+    bzero(buffer, maxlen);
+    bzero(buffer2, maxlen);
+    int variable=0;
+    snprintf(buffer, maxlen, "%s.txt", nome);
+    int fd = open(buffer, O_CREAT | O_RDWR);
+    if(fd < 0) exit(1);
+    if (!(flock(fd, LOCK_EX | LOCK_NB))){
+        if(read(fd, buffer, 1)==0){
+            n = read(sock,buffer2,maxlen);
 
-        if (n < 0) {
-            printf("errore nella lettura del socket");
-            while (__sync_lock_test_and_set(tst,1));
-            deletename(nome, head);
-            printf("%s è uscito\n", nome);
-            __sync_lock_release(tst);
-            exit(1);
+            if (n < 0) {
+                printf("errore nella lettura del socket");
+                close(sock);
+                flock(fd, LOCK_UN | LOCK_NB);
+                exit(1);
+            }
+            printf("BUFFER %s\n",buffer2);
+            variable=atoi(buffer2);
+            n = write(fd, buffer2, maxlen);
+            n = write(sock, buffer2, maxlen);
+            if (n < 0) {
+                printf("errore nella scrittura del socket");
+                close(sock);
+                flock(fd, LOCK_UN | LOCK_NB);
+                exit(1);
+            }
         }
+        while(1){
+            n = read(sock,buffer,maxlen);
 
-        printf("Here is the message: %s\n",buffer);
-        n = write(sock,"I got your message",18);
-        while (__sync_lock_test_and_set(tst,1));
-        deletename(nome, head);
-        printf("%s è uscito\n", nome);
-        __sync_lock_release(tst);
+            if (n < 0) {
+                printf("errore nella lettura del socket");
+                close(sock);
+                flock(fd, LOCK_UN | LOCK_NB);
+                exit(1);
+            }
 
+            printf("Here is the message: %s\n",buffer);
+            n = write(sock,"I got your message",18);
+
+            if (n < 0) {
+                printf("errore nella scrittura del socket");
+                flock(fd, LOCK_UN | LOCK_NB);
+                close(sock);
+                exit(1);
+            }
+        }
+    }
+    else{
+        n = write(sock,"c'è già un utente attivo con quel ID!",37);
         if (n < 0) {
             printf("errore nella scrittura del socket");
-            while (__sync_lock_test_and_set(tst,1));
-            deletename(nome, head);
-            printf("%s è uscito\n", nome);
-            __sync_lock_release(tst);
-            exit(1);
         }
+        close(sock);
     }
-}
-
-int isthere (char nome[], nodo **head){
-    if ((*head)==NULL){
-        (*head)=malloc(sizeof(nodo));
-        (*head)->next=NULL;
-        strcpy((*head)->name,nome);
-        return(0);
-    }
-    else {
-        nodo* tmp=*head;
-        nodo* prev=NULL;
-        while (tmp!=NULL){
-            if ((strcmp(tmp->name, nome)==0)){
-                return(1);
-            }
-            prev=tmp;
-            tmp=tmp->next;
-        }
-        //qui ci va solo se non ha trovato il nome
-        prev=malloc(sizeof(nodo));
-        prev->next=NULL;
-        strcpy(prev->name,nome);
-        return(0);
-    }
-}
-
-void deletename(char nome[], nodo **head){
-    if ((*head)!=NULL){
-        if ((strcmp((*head)->name, nome)==0)){
-            free(*head);
-            (*head)=NULL;
-        }
-        else{
-
-            nodo* tmp=*head;
-            nodo* prev=tmp;
-            int found=0;
-            while(tmp!=NULL){
-                if ((strcmp(tmp->name, nome)==0)){
-                    found=1;
-                    break;
-                }
-                prev=tmp;
-                tmp=tmp->next;
-            }
-            if (found==0) return;
-            nodo* tmp2=tmp->next;
-            free(tmp);
-            prev->next=tmp2;
-        }
-    }
-    return;
 }
