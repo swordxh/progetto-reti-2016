@@ -39,16 +39,20 @@ int main( int argc, char *argv[] ) {
         exit(1);
     }
     listen(sockfd,10);
+
+    int var=0;
+
     while (1) {
         newsockfd = accept(sockfd, (struct sockaddr *) NULL, NULL);
         int n;
         if (newsockfd < 0) {
-            perror("errore in accept");
+            printf("errore in accept");
             exit(1);
         }
         char buffer[maxlen];
         bzero(buffer,maxlen);
-        n = read(newsockfd,buffer,maxlen-1);
+        int var=0;
+        n = read(newsockfd,buffer,maxlen);
         if (n>0){
             printf("%s è entrato\n", buffer);
             pid = fork();
@@ -75,63 +79,117 @@ int main( int argc, char *argv[] ) {
 
 }
 
+
 void serverstart (int sock, char nome[] ){
     int n;
     char buffer[maxlen];
     char buffer2[maxlen];
-    bzero(buffer, maxlen);
-    bzero(buffer2, maxlen);
     int variable=0;
     snprintf(buffer, maxlen, "%s.txt", nome);
-    int fd = open(buffer, O_CREAT | O_RDWR);
+    int fd = open(buffer, O_CREAT | O_RDWR , 0666);
     if(fd < 0) exit(1);
+
+
     if (!(flock(fd, LOCK_EX | LOCK_NB))){
+
         if(read(fd, buffer, 1)==0){
+            n = write(sock,"inserisci un numero\n",maxlen);
+            if (n < 0) {
+                printf("errore nella scrittura del socket");
+                close(sock);
+                flock(fd, LOCK_UN | LOCK_NB);
+                close(fd);
+                exit(1);
+            }
             n = read(sock,buffer2,maxlen);
 
             if (n < 0) {
                 printf("errore nella lettura del socket");
                 close(sock);
                 flock(fd, LOCK_UN | LOCK_NB);
+                close(fd);
                 exit(1);
             }
+            buffer[n]='\0';
             printf("BUFFER %s\n",buffer2);
             variable=atoi(buffer2);
+            printf("questo è l intero:%d",variable);
             n = write(fd, buffer2, maxlen);
             n = write(sock, buffer2, maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket");
                 close(sock);
                 flock(fd, LOCK_UN | LOCK_NB);
+                close(fd);
+                exit(1);
+            }
+        }
+        else if (read(fd, buffer, maxlen)>=0){
+            variable=atoi(buffer2);
+            n = write(sock,buffer,maxlen);
+            if (n < 0) {
+                printf("errore nella scrittura del socket");
+                close(sock);
+                flock(fd, LOCK_UN | LOCK_NB);
+                close(fd);
                 exit(1);
             }
         }
         while(1){
-            n = read(sock,buffer,maxlen);
+            do{
+                n = read(sock,buffer,maxlen);
 
-            if (n < 0) {
-                printf("errore nella lettura del socket");
-                close(sock);
-                flock(fd, LOCK_UN | LOCK_NB);
-                exit(1);
+                if (n < 0) {
+                    printf("errore nella lettura del socket");
+                    close(sock);
+                    flock(fd, LOCK_UN | LOCK_NB);
+                    close(fd);
+                    exit(1);
+                }
+
+                if ((strcmp(buffer, "inc")!=0) || (strcmp(buffer, "dec")!=0)){
+                    n = write(sock,"devi inserire dec o inc!",25);
+                    if (n < 0) {
+                        printf("errore nella scrittura del socket");
+                        flock(fd, LOCK_UN | LOCK_NB);
+                        close(sock);
+                        close(fd);
+                        exit(1);
+                    }
+                }
+
+
+            }while ((strcmp(buffer, "inc")!=0) || (strcmp(buffer, "dec")!=0));
+
+            if (strcmp(buffer, "dec")==0){
+                variable=variable-1;
             }
-
-            printf("Here is the message: %s\n",buffer);
-            n = write(sock,"I got your message",18);
-
+            else {
+                variable=variable+1;
+            }
+            snprintf(buffer, maxlen, "%d\0", variable);
+            n=write(sock,buffer,maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket");
                 flock(fd, LOCK_UN | LOCK_NB);
                 close(sock);
+                close(fd);
                 exit(1);
             }
+
         }
+        flock(fd, LOCK_UN | LOCK_NB);
+        close(sock);
+        close(fd);
+        exit(0);
     }
     else{
-        n = write(sock,"c'è già un utente attivo con quel ID!",37);
+        n = write(sock,"c'è già un utente attivo con quel ID!",39);
         if (n < 0) {
             printf("errore nella scrittura del socket");
         }
+        close(fd);
         close(sock);
+        exit(2);
     }
 }
