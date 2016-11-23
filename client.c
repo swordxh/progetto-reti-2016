@@ -1,3 +1,16 @@
+/*
+STRUTTURA FUNZIONAMENTO CLIENT:
+-scrivi su buffer id cliente
+for(;;){
+-leggi da buffer finchè non è finito
+-scrivi su shell client ciò che è nel buffer
+-prendi da shell stringa che scrive client
+-scrivila nel buffer
+}
+
+*/
+
+
 /* #include	"unp.h" */
 #include <stdio.h>
 #include <stdlib.h>
