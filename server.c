@@ -87,7 +87,7 @@ void serverstart (int sock, char nome[] ){
     snprintf(buffer, maxlen, "%s.txt", nome);
     int fd = open(buffer, O_CREAT | O_RDWR , 0666);
     if(fd < 0) exit(1);
-
+    memset(buffer,0 , sizeof(buffer));
 
     if (!(flock(fd, LOCK_EX | LOCK_NB))){
 
@@ -100,7 +100,7 @@ void serverstart (int sock, char nome[] ){
                 close(fd);
                 exit(1);
             }
-            memset(buffer, 0, maxlen);
+            memset(buffer,0 , sizeof(buffer));
             n = read(sock,buffer,maxlen);
 
             if (n < 0) {
@@ -136,8 +136,8 @@ void serverstart (int sock, char nome[] ){
             }
         }
         while(1){
-            memset(buffer, 0, maxlen);
             do{
+                memset(buffer,0 , sizeof(buffer));
                 n = read(sock,buffer,maxlen);
 
                 if (n < 0) {
@@ -169,6 +169,7 @@ void serverstart (int sock, char nome[] ){
                 variable=variable+1;
             }
             snprintf(buffer, maxlen, "%d\0", variable);
+            n = write(fd, buffer, maxlen);
             n=write(sock,buffer,maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket");
