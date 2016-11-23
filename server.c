@@ -11,7 +11,7 @@
 #include<pthread.h>
 #include <sys/file.h>
 #include <fcntl.h>
-#define maxlen 256
+#define maxlen 99
 
 void serverstart (int sock, char nome[]);
 
