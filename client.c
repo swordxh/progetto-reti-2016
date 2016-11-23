@@ -103,7 +103,7 @@ int main(int argc, char **argv){
             exit(-9);
         }
         
-        while(message[n]!='\n' && (n<MAXLINE)){
+        while(message[n]!='\n' && (n<sizeof(message))){
             n++;
         }
         message[n]='\0';
