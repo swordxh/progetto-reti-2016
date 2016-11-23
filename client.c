@@ -61,7 +61,7 @@ int main(int argc, char **argv){
     for(;;){ //per far si che una volta finito di incrementare ricomincia e rifa da capo finchè ctrl+c
     //stampa su shell client (leggendo dal buffer) quello che manda server
         
-    /*while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
+    while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
             recvline[n] = 0;
             if (fputs(recvline, stdout) == EOF){
                 printf("fputs() error\n");
@@ -73,7 +73,7 @@ int main(int argc, char **argv){
             printf("read() error\n");
             exit(-8);
         }
-       */ 
+       
         n=0;
 
     
