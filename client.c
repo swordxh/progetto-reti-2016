@@ -7,7 +7,6 @@ for(;;){
 -prendi da shell stringa che scrive client
 -scrivila nel buffer
 }
-
 */
 
 
@@ -28,39 +27,39 @@ for(;;){
 
 int main(int argc, char **argv){
     
-	int			sockfd, n;
-	char			recvline[MAXLINE + 1];
-	struct sockaddr_in	servaddr;
+    int			sockfd, n;
+    char			recvline[MAXLINE + 1];
+    struct sockaddr_in	servaddr;
     char message[MAXLINE];
     
-
-	if (argc != 3){
-	/*	err_quit("usage: a.out <IPaddress>"); NON VA */
-		printf("errore di lancio, usa: client tuoIP tuoID\n");
-		exit(-1);
-	}
-
-	if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-	/*	err_sys("socket error"); */
-		printf("socket error\n");
-		exit(-2);
-	}
-
-/*	bzero(&servaddr, sizeof(servaddr)); */
-	memset(&servaddr, 0, sizeof(servaddr));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_port   = htons(2016);	/* daytime server */
-	if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0){
-	/*	err_quit("inet_pton error for %s", argv[1]); */
-		printf("inet_pton error for %s\n", argv[1]);
-		exit(-3);
-	}
-
-	if (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0){
-		/*err_sys("connect error");*/
-		printf("connect error\n");
-		exit(-4); 
-	}
+    
+    if (argc != 3){
+        /*	err_quit("usage: a.out <IPaddress>"); NON VA */
+        printf("errore di lancio, usa: client tuoIP tuoID\n");
+        exit(-1);
+    }
+    
+    if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+        /*	err_sys("socket error"); */
+        printf("socket error\n");
+        exit(-2);
+    }
+    
+    /*	bzero(&servaddr, sizeof(servaddr)); */
+    memset(&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port   = htons(2016);	/* daytime server */
+    if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0){
+        /*	err_quit("inet_pton error for %s", argv[1]); */
+        printf("inet_pton error for %s\n", argv[1]);
+        exit(-3);
+    }
+    
+    if (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0){
+        /*err_sys("connect error");*/
+        printf("connect error\n");
+        exit(-4);
+    }
     
     //mando id al server
     
@@ -70,11 +69,11 @@ int main(int argc, char **argv){
     }
     
     n=0;
-
+    
     for(;;){ //per far si che una volta finito di incrementare ricomincia e rifa da capo finchè ctrl+c
-    //stampa su shell client (leggendo dal buffer) quello che manda server
+        //stampa su shell client (leggendo dal buffer) quello che manda server
         
-    while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
+        if ((n = read(sockfd, recvline, MAXLINE)) > 0) {
             recvline[n] = 0;
             if (fputs(recvline, stdout) == EOF){
                 printf("fputs() error\n");
@@ -86,33 +85,33 @@ int main(int argc, char **argv){
             printf("read() error\n");
             exit(-8);
         }
-       
+        
         n=0;
-
-    
-    /*procedimento di stampa su shell client di quello che server manda nel socket:
+        
+        
+        /*procedimento di stampa su shell client di quello che server manda nel socket:
      -read legge dal socket e mette su recvline per un massimo di MAXLINE righe
      -fput fa la stampa su shell (stdout) di quello che c'è in recvline)
      */
         
         
-    //client scrive ora su buffer con valore da inizializzare/decrementare o aumentare
-    
+        //client scrive ora su buffer con valore da inizializzare/decrementare o aumentare
+        
         
         if (fgets(message, MAXLINE, stdin)==NULL) {
             printf("fgets() error\n");
             exit(-9);
         }
         
-
+        while(message[n]!='\n' && (n<MAXLINE)){
+            n++;
+        }
+        message[n]='\0';
+        
         if ((n=write(sockfd,message,sizeof(message))<0)){
             printf("write() error\n");
             exit(-10);
         }
     }
-    
-    
-
-
-	exit(0);
+    exit(0);
 }
