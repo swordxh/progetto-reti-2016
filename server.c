@@ -83,7 +83,6 @@ int main( int argc, char *argv[] ) {
 void serverstart (int sock, char nome[] ){
     int n;
     char buffer[maxlen];
-    char buffer2[maxlen];
     int variable=0;
     snprintf(buffer, maxlen, "%s.txt", nome);
     int fd = open(buffer, O_CREAT | O_RDWR , 0666);
@@ -101,7 +100,8 @@ void serverstart (int sock, char nome[] ){
                 close(fd);
                 exit(1);
             }
-            n = read(sock,buffer2,maxlen);
+            memset(buffer, 0, maxlen);
+            n = read(sock,buffer,maxlen);
 
             if (n < 0) {
                 printf("errore nella lettura del socket");
@@ -111,11 +111,11 @@ void serverstart (int sock, char nome[] ){
                 exit(1);
             }
             buffer[n]='\0';
-            printf("BUFFER %s\n",buffer2);
-            variable=atoi(buffer2);
+            printf("BUFFER %s\n",buffer);
+            variable=atoi(buffer);
             printf("questo è l intero:%d",variable);
-            n = write(fd, buffer2, maxlen);
-            n = write(sock, buffer2, maxlen);
+            n = write(fd, buffer, maxlen);
+            n = write(sock, buffer, maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket");
                 close(sock);
@@ -125,7 +125,7 @@ void serverstart (int sock, char nome[] ){
             }
         }
         else if (read(fd, buffer, maxlen)>=0){
-            variable=atoi(buffer2);
+            variable=atoi(buffer);
             n = write(sock,buffer,maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket");
@@ -136,6 +136,7 @@ void serverstart (int sock, char nome[] ){
             }
         }
         while(1){
+            memset(buffer, 0, maxlen);
             do{
                 n = read(sock,buffer,maxlen);
 
@@ -147,7 +148,7 @@ void serverstart (int sock, char nome[] ){
                     exit(1);
                 }
 
-                if ((strcmp(buffer, "inc")!=0) || (strcmp(buffer, "dec")!=0)){
+                if ((strcmp(buffer, "inc")!=0) && (strcmp(buffer, "dec")!=0)){
                     n = write(sock,"devi inserire dec o inc!",25);
                     if (n < 0) {
                         printf("errore nella scrittura del socket");
@@ -159,7 +160,7 @@ void serverstart (int sock, char nome[] ){
                 }
 
 
-            }while ((strcmp(buffer, "inc")!=0) || (strcmp(buffer, "dec")!=0));
+            }while ((strcmp(buffer, "inc")!=0) && (strcmp(buffer, "dec")!=0));
 
             if (strcmp(buffer, "dec")==0){
                 variable=variable-1;
