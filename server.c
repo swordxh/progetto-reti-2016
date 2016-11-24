@@ -93,24 +93,24 @@ void serverstart (int sock, char nome[] ){
 
         if(n=read(fd, buffer, 1)==0){
             do{
-            n = write(sock,"inserisci un numero\n",maxlen);
-            if (n < 0) {
-                printf("errore nella scrittura del socket");
-                close(sock);
-                flock(fd, LOCK_UN | LOCK_NB);
-                close(fd);
-                exit(1);
-            }
-            memset(buffer,0 , sizeof(buffer));
-            n = read(sock,buffer,maxlen);
+                n = write(sock,"inserisci un numero\n",maxlen);
+                if (n < 0) {
+                    printf("errore nella scrittura del socket");
+                    close(sock);
+                    flock(fd, LOCK_UN | LOCK_NB);
+                    close(fd);
+                    exit(1);
+                }
+                memset(buffer,0 , sizeof(buffer));
+                n = read(sock,buffer,maxlen);
 
-            if (n < 0) {
-                printf("errore nella lettura del socket");
-                close(sock);
-                flock(fd, LOCK_UN | LOCK_NB);
-                close(fd);
-                exit(1);
-            }
+                if (n < 0) {
+                    printf("errore nella lettura del socket");
+                    close(sock);
+                    flock(fd, LOCK_UN | LOCK_NB);
+                    close(fd);
+                    exit(1);
+                }
 
             }while (sscanf(buffer, "%d", &variable) == 0);
 
