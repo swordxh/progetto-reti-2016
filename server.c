@@ -8,7 +8,6 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include<pthread.h>
 #include <sys/file.h>
 #include <fcntl.h>
 #define maxlen 99
@@ -23,11 +22,9 @@ int main( int argc, char *argv[] ) {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd < 0) {
-        printf("errore nel apertura socket ");
+        printf("errore nel apertura socket\n");
         exit(1);
     }
-
-    bzero((char *) &serv_addr, sizeof(serv_addr));
 
     memset(&serv_addr,0 , sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
@@ -46,19 +43,21 @@ int main( int argc, char *argv[] ) {
         newsockfd = accept(sockfd, (struct sockaddr *) NULL, NULL);
         int n;
         if (newsockfd < 0) {
-            printf("errore in accept");
-            exit(1);
+            printf("errore in accept\n");
+            close(sockfd);
+            close(newsockfd);
+            exit(2);
         }
         char buffer[maxlen];
         bzero(buffer,maxlen);
-        int var=0;
+        var=0;
         n = read(newsockfd,buffer,maxlen);
         if (n>0){
             printf("%s è entrato\n", buffer);
             pid = fork();
             if (pid < 0) {
-                perror("errore in fork");
-                exit(1);
+                perror("errore in fork\n");
+                exit(3);
             }
 
             if (pid == 0) {
@@ -72,7 +71,7 @@ int main( int argc, char *argv[] ) {
             }
         }
         else{
-            printf("errore nella lettura del socket");
+            printf("errore nella lettura del socket\n");
             close(newsockfd);
         }
     }
@@ -86,7 +85,11 @@ void serverstart (int sock, char nome[] ){
     int variable=0;
     snprintf(buffer, maxlen, "%s.txt", nome);
     int fd = open(buffer, O_CREAT | O_RDWR , 0666);
-    if(fd < 0) exit(1);
+    if(fd < 0){
+        printf("errore nel apertura del file %s\n",buffer);
+        close(sock);
+        exit(4);
+    }
     memset(buffer,0 , sizeof(buffer));
 
     if (!(flock(fd, LOCK_EX | LOCK_NB))){
@@ -95,21 +98,21 @@ void serverstart (int sock, char nome[] ){
             do{
                 n = write(sock,"inserisci un numero\n",maxlen);
                 if (n < 0) {
-                    printf("errore nella scrittura del socket");
+                    printf("errore nella scrittura del socket\n");
                     close(sock);
                     flock(fd, LOCK_UN | LOCK_NB);
                     close(fd);
-                    exit(1);
+                    exit(5);
                 }
                 memset(buffer,0 , sizeof(buffer));
                 n = read(sock,buffer,maxlen);
 
                 if (n < 0) {
-                    printf("errore nella lettura del socket");
+                    printf("errore nella lettura del socket\n");
                     close(sock);
                     flock(fd, LOCK_UN | LOCK_NB);
                     close(fd);
-                    exit(1);
+                    exit(6);
                 }
 
             }while (sscanf(buffer, "%d", &variable) == 0);
@@ -118,25 +121,32 @@ void serverstart (int sock, char nome[] ){
             n = write(fd, buffer, maxlen);
             n = write(sock, buffer, maxlen);
             if (n < 0) {
-                printf("errore nella scrittura del socket");
+                printf("errore nella scrittura del socket\n");
                 close(sock);
                 flock(fd, LOCK_UN | LOCK_NB);
                 close(fd);
-                exit(1);
+                exit(7);
             }
         }
         else if (n>=0){
             lseek(fd, 0, SEEK_SET);
-            n=read(fd, buffer, maxlen)>=0;
+            n=read(fd, buffer, maxlen);
+            if (n < 0) {
+                printf("errore nella lettura del file\n");
+                close(sock);
+                flock(fd, LOCK_UN | LOCK_NB);
+                close(fd);
+                exit(8);
+            }
             variable=atoi(buffer);
             lseek(fd, 0, SEEK_SET);
             n = write(sock,buffer,maxlen);
             if (n < 0) {
-                printf("errore nella scrittura del socket");
+                printf("errore nella scrittura del socket\n");
                 close(sock);
                 flock(fd, LOCK_UN | LOCK_NB);
                 close(fd);
-                exit(1);
+                exit(9);
             }
         }
         while(1){
@@ -145,21 +155,21 @@ void serverstart (int sock, char nome[] ){
                 n = read(sock,buffer,maxlen);
 
                 if (n < 0) {
-                    printf("errore nella lettura del socket");
+                    printf("errore nella lettura del socket\n");
                     close(sock);
                     flock(fd, LOCK_UN | LOCK_NB);
                     close(fd);
-                    exit(1);
+                    exit(10);
                 }
 
                 if ((strcmp(buffer, "inc")!=0) && (strcmp(buffer, "dec")!=0)){
                     n = write(sock,"devi inserire dec o inc!",25);
                     if (n < 0) {
-                        printf("errore nella scrittura del socket");
+                        printf("errore nella scrittura del socket\n");
                         flock(fd, LOCK_UN | LOCK_NB);
                         close(sock);
                         close(fd);
-                        exit(1);
+                        exit(11);
                     }
                 }
 
@@ -178,11 +188,11 @@ void serverstart (int sock, char nome[] ){
             n = write(fd, buffer, maxlen);
             n=write(sock,buffer,maxlen);
             if (n < 0) {
-                printf("errore nella scrittura del socket");
+                printf("errore nella scrittura del socket\n");
                 flock(fd, LOCK_UN | LOCK_NB);
                 close(sock);
                 close(fd);
-                exit(1);
+                exit(12);
             }
 
         }
@@ -192,12 +202,12 @@ void serverstart (int sock, char nome[] ){
         exit(0);
     }
     else{
-        n = write(sock,"c'è già un utente attivo con quel ID!",39);
+        n = write(sock,"c'è già un utente attivo con quel ID!\n",40);
         if (n < 0) {
-            printf("errore nella scrittura del socket");
+            printf("errore nella scrittura del socket\n");
         }
         close(fd);
         close(sock);
-        exit(2);
+        exit(13);
     }
 }
