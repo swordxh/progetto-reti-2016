@@ -82,6 +82,7 @@ int main( int argc, char *argv[] ) {
 void serverstart (int sock, char nome[] ){
     int n;
     char buffer[maxlen];
+    char buffer2[maxlen];
     int variable=0;
     snprintf(buffer, maxlen, "%s.txt", nome);
     int fd = open(buffer, O_CREAT | O_RDWR , 0666);
@@ -119,7 +120,8 @@ void serverstart (int sock, char nome[] ){
 
             lseek(fd, 0, SEEK_SET);
             n = write(fd, buffer, maxlen);
-            n = write(sock, buffer, maxlen);
+            snprintf(buffer2, maxlen, "Hai inizializzato il numero: %s, inserisci un dec o inc\n", buffer);
+            n = write(sock, buffer2, maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket\n");
                 close(sock);
@@ -140,7 +142,8 @@ void serverstart (int sock, char nome[] ){
             }
             variable=atoi(buffer);
             lseek(fd, 0, SEEK_SET);
-            n = write(sock,buffer,maxlen);
+            snprintf(buffer2, maxlen, "Nella vecchia sessione il numero inizializzato era: %s,inserisci un dec o inc\n", buffer);
+            n = write(sock,buffer2,maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket\n");
                 close(sock);
@@ -163,7 +166,7 @@ void serverstart (int sock, char nome[] ){
                 }
 
                 if ((strcmp(buffer, "inc")!=0) && (strcmp(buffer, "dec")!=0)){
-                    n = write(sock,"devi inserire dec o inc!",25);
+                    n = write(sock,"devi inserire dec o inc\n!",26);
                     if (n < 0) {
                         printf("errore nella scrittura del socket\n");
                         flock(fd, LOCK_UN | LOCK_NB);
@@ -183,7 +186,7 @@ void serverstart (int sock, char nome[] ){
                 variable=variable+1;
             }
             memset(buffer,0 , sizeof(buffer));
-            snprintf(buffer, maxlen, "%d", variable);
+            snprintf(buffer, maxlen, "%d\n", variable);
             lseek(fd, 0, SEEK_SET);
             n = write(fd, buffer, maxlen);
             n=write(sock,buffer,maxlen);
