@@ -120,7 +120,7 @@ void serverstart (int sock, char nome[] ){
 
             lseek(fd, 0, SEEK_SET);
             n = write(fd, buffer, maxlen);
-            snprintf(buffer2, maxlen, "Hai inizializzato il numero: %s, inserisci un dec o inc\n", buffer);
+            snprintf(buffer2, maxlen, "Hai inizializzato il numero: %s, inserisci un incremento\n", buffer);
             n = write(sock, buffer2, maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket\n");
@@ -147,9 +147,10 @@ void serverstart (int sock, char nome[] ){
                 close(fd);
                 exit(8);
 	    }
+
             //variable=atoi(buffer);
             lseek(fd, 0, SEEK_SET);
-            snprintf(buffer2, maxlen, "Nella vecchia sessione il numero inizializzato era: %s,inserisci un dec o inc\n", buffer);
+            snprintf(buffer2, maxlen, "Nella vecchia sessione il numero inizializzato era: %s, inserisci un incremento\n", buffer);
             n = write(sock,buffer2,maxlen);
             if (n < 0) {
                 printf("errore nella scrittura del socket\n");
@@ -160,6 +161,8 @@ void serverstart (int sock, char nome[] ){
             }
         }
         while(1){
+	    int n2=0;
+            int variable2=0;
             do{
                 memset(buffer,0 , sizeof(buffer));
                 n = read(sock,buffer,maxlen);
@@ -172,8 +175,8 @@ void serverstart (int sock, char nome[] ){
                     exit(10);
                 }
 
-                if ((strcmp(buffer, "inc")!=0) && (strcmp(buffer, "dec")!=0)){
-                    n = write(sock,"devi inserire dec o inc!\n",26);
+                if ((n2=sscanf(buffer, "%d", &variable2))==0){
+                    n = write(sock,"devi inserire un numero!\n",26);
                     if (n < 0) {
                         printf("errore nella scrittura del socket\n");
                         flock(fd, LOCK_UN | LOCK_NB);
@@ -182,16 +185,9 @@ void serverstart (int sock, char nome[] ){
                         exit(11);
                     }
                 }
+	    }while (n2==0);
 
-
-            }while ((strcmp(buffer, "inc")!=0) && (strcmp(buffer, "dec")!=0));
-
-            if (strcmp(buffer, "dec")==0){
-                variable=variable-1;
-            }
-            else {
-                variable=variable+1;
-            }
+            variable=variable+variable2;
             memset(buffer,0 , sizeof(buffer));
             snprintf(buffer, maxlen, "%d\n", variable);
             lseek(fd, 0, SEEK_SET);
